@@ -1,16 +1,15 @@
 #![allow(dead_code, unused_variables)]
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 
 use std::time::Duration;
-
 use serde_json::json;
 use tauri::Manager;
 use tauri_plugin_store::StoreBuilder;
+use crate::model::{state::{AppState, MetricsState}, todo::Todo};
 
-use crate::model::state::{AppState, MetricsState};
-
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 mod commands;
 mod model;
+mod base;
 
 pub fn run() {
     tauri::Builder::default()
@@ -24,6 +23,7 @@ pub fn run() {
                 .default("APP_WINDOWS", json!({"title": window.title()?}))
                 .build()?;
             let app_state = AppState::load_from_store(&store);
+            app_state.todos.lock().unwrap().insert("Zhangsan".to_string(), Todo::new("Zhangsan"));
             app.manage(app_state);
             app.manage(MetricsState::new());
 
@@ -45,9 +45,10 @@ pub fn run() {
                     _ => {},
                 }
             });
+            
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::user::home, commands::example])
+        .invoke_handler(tauri::generate_handler![commands::user::home, commands::example, commands::todos::todo_list, commands::todos::incr_counter])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -1,4 +1,3 @@
-use crate::model::Todo;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -6,6 +5,8 @@ use std::{
 };
 use tauri::AppHandle;
 use tauri_plugin_store::{Store, StoreExt};
+
+use crate::model::todo::Todo;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppState {

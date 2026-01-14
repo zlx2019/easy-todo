@@ -1,9 +1,6 @@
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
-
-
-
 #[tauri::command]
 pub async fn home(app: AppHandle) -> Result<String, &'static str>{
     // 获取 store
