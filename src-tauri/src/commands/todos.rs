@@ -1,8 +1,16 @@
 // Todos commands
 
 use std::sync::atomic::Ordering;
-use tauri::State;
-use crate::{base::CmdResult, model::{state::{AppState, MetricsState}, todo::Todo}};
+use serde::Deserialize;
+use tauri::{AppHandle, State};
+use tracing::info;
+
+use crate::{
+    domain::todo::Todo, types::{
+        CmdResult, 
+        state::{AppState, MetricsState}
+    }
+};
 
 
 #[tauri::command]
@@ -11,10 +19,30 @@ pub async fn incr_counter(state: State<'_, MetricsState>) -> CmdResult<u64>{
 }
 
 
+/// 获取所有待办
 #[tauri::command]
 pub async fn todo_list(state: State<'_, AppState>) -> CmdResult<Vec<Todo>> {
     let todos = state.todos.lock().unwrap();
-    println!("{:#?}", todos);
     let values = todos.values().cloned().collect::<Vec<Todo>>();
     Ok(values)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddTodoReq {
+    pub title: String,
+    pub content: String
+}
+
+/// 添加待办
+#[tauri::command]
+pub async fn add_todo(app: AppHandle, state: State<'_, AppState>, req: AddTodoReq) -> CmdResult<()>{
+    println!("dwadaw");
+    let todo = Todo::new(req.title, req.content);
+    {
+        let mut todos = state.todos.lock().unwrap();
+        todos.insert(todo.id.clone(), todo);
+    }
+    state.write_to_store(&app, true)?;
+    info!("hello");
+    Ok(())
 }

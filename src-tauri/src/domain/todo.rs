@@ -13,11 +13,11 @@ pub struct Todo {
 }
 
 impl Todo {
-    pub fn new(title: impl Into<String>) -> Self {
+    pub fn new(title: impl Into<String>, content: impl Into<String>) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             title: title.into(),
-            content: "xxx".to_string(),
+            content: content.into(),
             status: TodoStatus::Pending,
             created_at: Local::now(),
         }

@@ -1,20 +1,16 @@
 "$schema" = "https://schema.tauri.app/config/2"
+### 项目配置
 productName = "easy-todo"
 version = "0.1.0"
 identifier = "com.zero.easy-todo"
 
-### 打包配置
-[build]
-# 前端静态资源目录
-frontendDist = "../dist"
-
-# 前端开发服务器
-devUrl = "http://localhost:5173"
-beforeDevCommand = "pnpm dev"
-beforeBuildCommand = "pnpm build"
-
 ### 应用配置
-[[app.windows]]
+[app]
+  # MacOS 私有 API 配置。启用透明背景 API 并将 fullScreenEnabled 设置为 true
+  macOSPrivateApi = true
+  
+  ### 窗口配置
+  [[app.windows]]
   # 窗口标题
   title = "easy-todo"
   # 窗口初始大小
@@ -29,9 +25,18 @@ beforeBuildCommand = "pnpm build"
   # 是否可见, 默认可见
   visible = true
 
-  ### 窗口配置
+
+### 打包配置
+[build]
+# 前端静态资源目录
+frontendDist = "../dist"
+# 前端开发服务器
+devUrl = "http://localhost:5173"
+beforeDevCommand = "pnpm dev"
+beforeBuildCommand = "pnpm build"
 
 
+### 捆绑资源配置
 [bundle]
 active = true
 targets = "all"

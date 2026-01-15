@@ -41,19 +41,20 @@ const formatDate = (dateString) => {
   })
 }
 
+// 获取所有待办
+const get_todos = async () => { 
+  todos.value = await invoke("todo_list");
+  console.log(`reload todos`, todos.value);
+}
+
+
 // 添加新待办
-const addTodo = () => {
+const addTodo = async () => {
   if (!newTitle.value.trim()) return
-
-  const newTodo = {
-    id: crypto.randomUUID(),
-    title: newTitle.value,
-    content: newContent.value || '',
-    status: 0, // Pending
-    created_at: new Date().toISOString()
-  }
-
-  todos.value.unshift(newTodo)
+  if (!newContent.value.trim()) return
+  await invoke("add_todo", { "req": { "title": newTitle.value, "content": newContent.value } });
+  await get_todos()
+  
   newTitle.value = ''
   newContent.value = ''
 }
@@ -99,46 +100,38 @@ const incr_counter = () => {
     .then((data) => { 
       console.log(`counter: ${data}`);
     })
+  invoke("example").finally(() => { 
+    console.log(`call example`);
+    
+  });
 }
 
 // 模拟初始化数据
 onMounted(() => {
-  todos.value = [
-    {
-      id: '1',
-      title: '学习 Tauri 框架',
-      content: 'Tauri 是一个使用 Rust 构建跨平台桌面应用的框架',
-      status: 0,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: '2',
-      title: '完成 Todo 应用',
-      content: '实现一个功能完整的待办事项管理应用',
-      status: 1,
-      created_at: new Date(Date.now() - 86400000).toISOString()
-    },
-    {
-      id: '3',
-      title: '学习 Vue 3',
-      content: '深入理解 Vue 3 的 Composition API',
-      status: 0,
-      created_at: new Date(Date.now() - 172800000).toISOString()
-    }
-  ]
-
-  invoke("todo_list")
-    .then((data) => { 
-      console.log(`请求成功: ${data}`);
-      console.log(data);
-      
-      
-    })
-    .catch((err) => { 
-      console.log(`请求失败`);
-      console.log(err.error_code, err.error_message);
-      
-    })
+  // todos.value = [
+  //   {
+  //     id: '1',
+  //     title: '学习 Tauri 框架',
+  //     content: 'Tauri 是一个使用 Rust 构建跨平台桌面应用的框架',
+  //     status: 0,
+  //     created_at: new Date().toISOString()
+  //   },
+  //   {
+  //     id: '2',
+  //     title: '完成 Todo 应用',
+  //     content: '实现一个功能完整的待办事项管理应用',
+  //     status: 1,
+  //     created_at: new Date(Date.now() - 86400000).toISOString()
+  //   },
+  //   {
+  //     id: '3',
+  //     title: '学习 Vue 3',
+  //     content: '深入理解 Vue 3 的 Composition API',
+  //     status: 0,
+  //     created_at: new Date(Date.now() - 172800000).toISOString()
+  //   }
+  // ]
+  get_todos();
 })
 </script>
 

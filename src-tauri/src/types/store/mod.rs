@@ -1,3 +1,33 @@
+use anyhow::Context;
+use serde::{Serialize, de::DeserializeOwned};
+use tauri::AppHandle;
+use tauri_plugin_store::StoreExt;
+
+pub mod settings;
+
+/// 从 Store 中加载数据
+pub fn load_from_store <T>(app: &AppHandle, file_name: &str, key: &str) -> anyhow::Result<T>
+where T: Default + DeserializeOwned
+{
+    let val = app.get_store(file_name)
+        .and_then(|store| store.get(key))
+        .and_then(|value| serde_json::from_value::<T>(value).ok())
+        .unwrap_or_default();
+    Ok(val)
+}
+
+/// 将数据持久化到 Store
+pub fn write_to_store <T: Serialize> (app: &AppHandle, file_name: &str, key: &str, value: T, save: bool) -> anyhow::Result<()> {
+    let store = app.get_store(file_name)
+    .with_context(|| format!("not found store file: {}", file_name))?;
+    store.set(key, serde_json::to_value(value)?);
+    if save {
+        store.save()?;
+    }
+    Ok(())
+}
+
+
 // use std::collections::HashMap;
 
 // use serde::{Deserialize, Serialize};

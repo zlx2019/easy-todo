@@ -1,12 +1,13 @@
+use anyhow::Ok;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{atomic::AtomicU64, Mutex},
 };
 use tauri::AppHandle;
-use tauri_plugin_store::{Store, StoreExt};
 
-use crate::model::todo::Todo;
+use crate::{domain::todo::Todo, types::store::{load_from_store, write_to_store}};
+
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppState {
@@ -21,27 +22,15 @@ impl AppState {
     }
 
     // load store
-    pub fn load_from_store<R: tauri::Runtime>(store: &Store<R>) -> Self {
-        let todos = store
-            .get("TODOS")
-            .and_then(|value| serde_json::from_value::<HashMap<String, Todo>>(value).ok())
-            .unwrap_or_default();
-        Self {
-            todos: Mutex::new(todos),
-        }
+    pub fn load_from_store(app: &AppHandle) -> anyhow::Result<Self> {
+        let todos = load_from_store::<HashMap<String, Todo>>(app, "settings.json", "todos")?;
+        Ok(Self::new(Some(todos)))
     }
 
     // write store
     pub fn write_to_store(&self, app: &AppHandle, save: bool,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(store) = app.get_store("settings.json") {
-            let todos = self.todos.lock().unwrap();
-            store.set("TODOS", serde_json::to_value(todos.clone())?);
-            if save {
-                store.save()?;
-            }
-        }
-        Ok(())
+    ) -> anyhow::Result<()> {
+        Ok(write_to_store(app, "settings.json", "todos", self.todos.lock().unwrap().clone(), save)?)
     }
 }
 

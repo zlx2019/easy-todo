@@ -1,54 +1,67 @@
 #![allow(dead_code, unused_variables)]
+use std::sync::Mutex;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 
 use std::time::Duration;
-use serde_json::json;
 use tauri::Manager;
 use tauri_plugin_store::StoreBuilder;
-use crate::model::{state::{AppState, MetricsState}, todo::Todo};
+use time::macros::format_description;
+use tracing::info;
+use tracing_subscriber::fmt::time::LocalTime;
+use crate::types::{state::{AppState, MetricsState}, store::settings::AppUsttings};
+use crate::commands::todos::*;
 
 mod commands;
-mod model;
-mod base;
+mod types;
+mod errors;
+mod domain;
 
 pub fn run() {
+    let time_format = LocalTime::new(format_description!("[year]/[month]/[day] [hour]:[minute]:[second].[subsecond digits:3]"));
+    tracing_subscriber::fmt()
+                .with_max_level(tracing::Level::INFO)
+                .with_target(false)
+                .with_thread_ids(false)
+                .with_file(true)
+                .with_timer(time_format)
+                .with_line_number(true)
+                .init();
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
         .setup(|app| {
+            let handle = app.handle();
             let window = app.get_webview_window("main").ok_or("not found window")?;
-            
             // 加载 Store & 初始化 State
-            let store = StoreBuilder::new(app.handle(), "settings.json")
+            let store = StoreBuilder::new(handle, "settings.json")
                 .auto_save(Duration::from_mins(1))
-                .default("APP_WINDOWS", json!({"title": window.title()?}))
                 .build()?;
-            let app_state = AppState::load_from_store(&store);
-            app_state.todos.lock().unwrap().insert("Zhangsan".to_string(), Todo::new("Zhangsan"));
-            app.manage(app_state);
+            
+
+            // 从 Store 中加载状态数据 & 初始化
+            app.manage(AppState::load_from_store(handle)?);
+            app.manage(Mutex::new(AppUsttings::load_from_store(handle)?));
             app.manage(MetricsState::new());
 
-            // 设置日志级别
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
             // 窗口事件监听
             window.on_window_event(move |event| {
                 match event {
                     tauri::WindowEvent::CloseRequested { api , .. } => {
                         store.save().expect("store save faield");
-                        println!("Window closed.");
+                        info!("Window closed.");
                     },
                     _ => {},
                 }
             });
-            
+            info!("App setup success");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::user::home, commands::example, commands::todos::todo_list, commands::todos::incr_counter])
+        .invoke_handler(tauri::generate_handler![
+            commands::user::home,
+            commands::example, 
+            incr_counter,
+            todo_list,
+            add_todo
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
