@@ -1,5 +1,6 @@
 <script setup>
 import { invoke } from '@tauri-apps/api/core';
+import { listen, once } from '@tauri-apps/api/event';
 import { ref, computed, onMounted } from 'vue'
 
 // 状态定义
@@ -54,7 +55,6 @@ const addTodo = async () => {
   if (!newContent.value.trim()) return
   await invoke("add_todo", { "req": { "title": newTitle.value, "content": newContent.value } });
   await get_todos()
-  
   newTitle.value = ''
   newContent.value = ''
 }
@@ -106,32 +106,29 @@ const incr_counter = () => {
   });
 }
 
+// 调用一些发布事件的命令
+const publish_event = async () => { 
+  await invoke("publish_global_event")
+}
+
+
 // 模拟初始化数据
 onMounted(() => {
-  // todos.value = [
-  //   {
-  //     id: '1',
-  //     title: '学习 Tauri 框架',
-  //     content: 'Tauri 是一个使用 Rust 构建跨平台桌面应用的框架',
-  //     status: 0,
-  //     created_at: new Date().toISOString()
-  //   },
-  //   {
-  //     id: '2',
-  //     title: '完成 Todo 应用',
-  //     content: '实现一个功能完整的待办事项管理应用',
-  //     status: 1,
-  //     created_at: new Date(Date.now() - 86400000).toISOString()
-  //   },
-  //   {
-  //     id: '3',
-  //     title: '学习 Vue 3',
-  //     content: '深入理解 Vue 3 的 Composition API',
-  //     status: 0,
-  //     created_at: new Date(Date.now() - 172800000).toISOString()
-  //   }
-  // ]
+  // 加载待办
   get_todos();
+  // 注册 Tauri 事件监听器
+  listen('download-started', (event) => {
+    console.log(`[download-started-listen] ${event.id} payload: ${event.payload}`);
+  });
+  listen('download-progress', (event) => {
+    console.log(`[download-progress-listen] ${event.id} payload: ${event.payload}`);
+  });
+  listen('download-finished', (event) => {
+    console.log(`[download-finished-listen] ${event.id} payload: ${event.payload}`);
+  });
+
+  
+
 })
 </script>
 
@@ -220,6 +217,7 @@ onMounted(() => {
         <p class="empty-hint">添加一个新的待办开始吧！</p>
       </div>
 
+      <!-- 待办项 -->
       <div
         v-for="todo in filteredTodos"
         :key="todo.id"
@@ -253,6 +251,9 @@ onMounted(() => {
           </button>
         </div>
       </div>
+
+
+
     </div>
 
     <!-- 编辑模态框 -->
@@ -281,6 +282,7 @@ onMounted(() => {
   </div>
 
   <button @click="incr_counter">自增</button>
+  <button @click="publish_event" >发布事件</button>
 </template>
 
 <style scoped>

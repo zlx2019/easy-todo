@@ -6,7 +6,7 @@ use std::{
 };
 use tauri::AppHandle;
 
-use crate::{domain::todo::Todo, types::store::{load_from_store, write_to_store}};
+use crate::{consts, domain::todo::Todo, types::store::{load_from_store, write_to_store}};
 
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -23,14 +23,14 @@ impl AppState {
 
     // load store
     pub fn load_from_store(app: &AppHandle) -> anyhow::Result<Self> {
-        let todos = load_from_store::<HashMap<String, Todo>>(app, "settings.json", "todos")?;
+        let todos = load_from_store::<HashMap<String, Todo>>(app, consts::STORE_CONFIG, "todos")?;
         Ok(Self::new(Some(todos)))
     }
 
     // write store
     pub fn write_to_store(&self, app: &AppHandle, save: bool,
     ) -> anyhow::Result<()> {
-        Ok(write_to_store(app, "settings.json", "todos", self.todos.lock().unwrap().clone(), save)?)
+        Ok(write_to_store(app, consts::STORE_CONFIG, "todos", self.todos.lock().unwrap().clone(), save)?)
     }
 }
 

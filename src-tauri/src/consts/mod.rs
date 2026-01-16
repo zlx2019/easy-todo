@@ -1,0 +1,1 @@
+pub const STORE_CONFIG: &str = "settings.json";

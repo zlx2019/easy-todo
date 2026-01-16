@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-use crate::types::store::{load_from_store, write_to_store};
+use crate::{consts, types::store::{load_from_store, write_to_store}};
 
 /// 应用设置
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,14 +27,14 @@ impl AppUsttings {
     pub fn load_from_store(app: &AppHandle) -> anyhow::Result<Self> {
         Ok(load_from_store::<AppUsttings>(
             app,
-            "settings.json",
+            consts::STORE_CONFIG,
             "appSettings",
         )?)
     }
     pub fn write_to_store(&self, app: &AppHandle) -> anyhow::Result<()> {
         Ok(write_to_store(
             app,
-            "settings.json",
+            consts::STORE_CONFIG,
             "appSettings",
             self,
             true,

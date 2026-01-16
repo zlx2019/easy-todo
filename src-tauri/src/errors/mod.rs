@@ -6,6 +6,8 @@ use thiserror::Error;
 pub enum CmdError {
     #[error("{0}")]
     PlainText(&'static str),
+    #[error("Engin error")]
+    EnginError(#[from] tauri::Error),
     #[error("Unknown error")]
     Unknown(#[from] anyhow::Error),
 }
